@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 import getpass
 
@@ -42,17 +43,27 @@ class ChatOpenAILLM(BaseLLM):
             **{k: v for k, v in self.config.items() if k != 'model'}
         )
 
+class GoogleGenerativeAILLM(BaseLLM):
+    """GoogleGenerativeAI implementation."""
+    
+    def __init__(self, model_name: str, api_key: str = None, **kwargs):
+        self.api_key = api_key
+        super().__init__(model_name, **kwargs)
+    
+    def create_llm(self):
+        return ChatGoogleGenerativeAI(
+            google_api_key=self.api_key,
+            model=self.model_name,
+            **{k: v for k, v in self.config.items() if k != 'model'}
+        )
+
+
 class LLMFactory:
     """Factory class to create different LLM implementations."""
     
     _implementations = {
-        'openai': OpenAILLM,
-        'openrouter': OpenAILLM,  # Same as OpenAI but with different base_url
-        'huggingface_pipeline': HuggingFacePipelineLLM,
-        'huggingface_endpoint': HuggingFaceEndpointLLM,
-        'mistralai': MistralAILLM,
         'chatopenai': ChatOpenAILLM,
-        'ollama': OllamaLLM,
+        'google_genai': GoogleGenerativeAILLM,
     }
     
     @classmethod
